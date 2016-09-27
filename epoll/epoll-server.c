@@ -103,8 +103,9 @@ int socket_send(int sockfd)
     return tmp;
 }
 
-void epoll_error_msg(){
-    switch(errno){
+void epoll_error_msg()
+{
+    switch(errno) {
     case EBADF:
         printf("epoll error is EBADF\n");
         break;
@@ -236,17 +237,17 @@ int main (int argc, char *argv[])
                 ssize_t readed = 0;
                 char buf[1024] = {0};
 
-                while((count = read(events[i].data.fd, buf, 1024)) > 0){
+                while((count = read(events[i].data.fd, buf, 1024)) > 0) {
                     readed += count;
                 }
 
-                if((count == -1) && (errno != EAGAIN)){
+                if((count == -1) && (errno != EAGAIN)) {
                     epoll_error_msg();
                     close(client_sock);
                     events[i].data.fd = -1;
                 }
 
-                if(count == 0){
+                if(count == 0) {
                     close(client_sock);
                     continue;
                 }
@@ -259,7 +260,7 @@ int main (int argc, char *argv[])
             } else if(events[i].events & EPOLLOUT) {
                 client_sock = events[i].data.fd;
                 int rc = socket_send(client_sock);
-                if(rc < 0){
+                if(rc < 0) {
                     printf("write error\n");
                     continue;
                 }
