@@ -22,8 +22,6 @@ static int socket_create_bind(char *address, int port)
     int s, socket_fd;
     socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    /* struct addrinfo hints; */
-    /* struct addrinfo *rst, *rp; */
     struct sockaddr_in sa = {0};
     struct sockaddr_in *psa = NULL;
     sa.sin_family = AF_INET;
@@ -49,57 +47,6 @@ static int socket_create_bind(char *address, int port)
     set_nonblocking_socket(socket_fd);
     printf("success and the socket fd is: %d\n", socket_fd);
     return socket_fd;
-    /* memset(&hints, 0, sizeof(struct addrinfo)); */
-    /* hints.ai_family = AF_UNSPEC; */
-    /* hints.ai_socktype = SOCK_STREAM; */
-    /* hints.ai_flags = AI_ADDRCONFIG; */
-
-    /* s = getaddrinfo(address, NULL, &hints, &rst); */
-    /* if(s){ */
-    /*     printf("getaddrinfo return error: %d\n", s); */
-    /*     return ERROR; */
-    /* } */
-#if 0
-    for(rp = rst; rp != NULL; rp = rp->ai_next) {
-        socket_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if(socket_fd == -1) continue;
-
-        if(rp->ai_family == PF_INET) {
-            ((struct sockaddr_in *)rp->ai_addr)->sin_port = htons(port);
-        } else if(rp->ai_family == PF_INET6) {
-            ((struct sockaddr_in6 *)rp->ai_addr)->sin6_port = htons(port);
-        } else {
-            close(socket_fd);
-            continue;
-        }
-
-        /* s = bind (socket_fd, rp->ai_addr, rp->ai_addrlen); */
-        /* if(s == 0){ */
-        /*     break; */
-        /* } */
-
-        set_nonblocking_socket(socket_fd);
-        int rc = connect(socket_fd, rp->ai_addr, rp->ai_addrlen);
-        if(rc == 0 || errno == EINPROGRESS || errno == EWOULDBLOCK) {
-            if(rc < 0 && (errno == EINPROGRESS || errno == EWOULDBLOCK)) {
-                printf("error on connect, rc: %d, %s, %d", rc, __func__, __LINE__);
-            }
-            break;
-        }
-
-        close(socket_fd);
-        printf("close socket fd:%d\n", socket_fd);
-    }
-
-    if(rp == NULL) {
-        printf("could not bind\n");
-        return ERROR;
-    }
-
-
-    freeaddrinfo(rst);
-    return socket_fd;
-#endif
 }
 
 static int set_nonblocking_socket(int socket_fd)
@@ -168,7 +115,6 @@ int main(int argc, char **argv)
     if(client_sock == ERROR) return 0;
 
     ev.data.fd = client_sock;
-    /* ev.events = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLOUT; */
     ev.events = EPOLLOUT | EPOLLIN |EPOLLET;
 
     events = calloc(MAXEVENTS, sizeof(ev));
@@ -185,9 +131,15 @@ int main(int argc, char **argv)
             if(events[i].events & EPOLLIN) {
                 printf("get EPOLLIN event\n");
                 handle_read_event(events[i].data.fd);
+                ev.data.fd = events[i].data.fd;
+                ev.events = EPOLLET | EPOLLOUT;
+                epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
             } else if(events[i].events & EPOLLOUT) {
                 printf("get EPOLLOUT event\n");
                 handle_write_event(events[i].data.fd);
+                ev.data.fd = events[i].data.fd;
+                ev.events = EPOLLET | EPOLLIN;
+                epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
             }
         }
     }
