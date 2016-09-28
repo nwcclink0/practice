@@ -129,17 +129,17 @@ int main(int argc, char **argv)
 
         for(int i = 0; i < nfds; i++) {
             if(events[i].events & EPOLLIN) {
-                printf("get EPOLLIN event\n");
+                /* printf("get EPOLLIN event\n"); */
                 handle_read_event(events[i].data.fd);
-                ev.data.fd = events[i].data.fd;
-                ev.events = EPOLLET | EPOLLOUT;
-                epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
+                /* ev.data.fd = events[i].data.fd; */
+                /* ev.events = EPOLLET | EPOLLOUT; */
+                /* epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev); */
             } else if(events[i].events & EPOLLOUT) {
-                printf("get EPOLLOUT event\n");
+                /* printf("get EPOLLOUT event\n"); */
                 handle_write_event(events[i].data.fd);
-                ev.data.fd = events[i].data.fd;
-                ev.events = EPOLLET | EPOLLIN;
-                epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
+                /* ev.data.fd = events[i].data.fd; */
+                /* ev.events = EPOLLET | EPOLLIN; */
+                /* epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev); */
             }
         }
     }
