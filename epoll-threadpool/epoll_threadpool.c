@@ -217,7 +217,7 @@ int main(int argc, char **argv)
     struct epoll_event *events = NULL;
 
     if(argc != 2){
-        fprintf(stderr, "$s [host] [port]", argv[0]);
+        fprintf(stderr, "%s [host] [port]", argv[0]);
         exit(EXIT_FAILURE);
     }
 
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
     printf("the server pid is: %d\n", getpid());
 
     //create thread poll
-    threadpool *tpl = thread_pool_init(NUM_THREAD);
+    threadpool tpl = thread_pool_init(NUM_THREAD);
     connection_info *info = NULL;
     while(1){
         int num_fds = 0;
