@@ -71,7 +71,7 @@ int handle_write_event(int fd)
 {
     char buf[1024] = {0};
 
-    snprintf(buf, 1024, "this is pid server: %d\n", getpid());
+    snprintf(buf, 1024, "this is epoll-client: %d\n", getpid());
     if(write(fd, buf, 1024) < 0) {
         printf("write error, %s %d\n", __func__, __LINE__);
     }
