@@ -16,8 +16,8 @@
 
 #define NUM_THREAD 4
 
-#define EPOLL_THPOLL_ERR_SUCCESS 0
-#define EPOLL_THPOLL_ERR_ERROR -1
+#define EPOLL_THPOOL_ERR_SUCCESS 0
+#define EPOLL_THPOOL_ERR_ERROR -1
 typedef struct connection_info{
     int epoll_fd;
     struct epoll_event *event;
@@ -28,7 +28,7 @@ typedef struct connection_info{
 
 static int create_and_bind (char *port)
 {
-    if(port == NULL) return EPOLL_THPOLL_ERR_ERROR;
+    if(port == NULL) return EPOLL_THPOOL_ERR_ERROR;
     struct addrinfo hints;
     struct addrinfo *result, *rp;
     int rc, server_socket_fd;
@@ -39,18 +39,18 @@ static int create_and_bind (char *port)
     hints.ai_flags = AI_PASSIVE;
 
     rc = getaddrinfo(NULL, port, &hints, &result);
-    if (rc != 0) {
+    if (rc != EPOLL_THPOOL_ERR_SUCCESS) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rc));
-        return EPOLL_THPOLL_ERR_ERROR;
+        return EPOLL_THPOOL_ERR_ERROR;
     }
 
     for (rp = result; rp != NULL; rp = rp->ai_next) {
         server_socket_fd= socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (server_socket_fd == -1)
+        if (server_socket_fd == EPOLL_THPOOL_ERR_ERROR)
             continue;
 
         rc = bind(server_socket_fd, rp->ai_addr, rp->ai_addrlen);
-        if (rc == 0) {
+        if (rc == EPOLL_THPOOL_ERR_SUCCESS) {
             /* We managed to bind successfully! */
             break;
         }
@@ -60,7 +60,7 @@ static int create_and_bind (char *port)
 
     if (rp == NULL) {
         fprintf(stderr, "Could not bind\n");
-        return EPOLL_THPOLL_ERR_ERROR;
+        return EPOLL_THPOOL_ERR_ERROR;
     }
 
     freeaddrinfo(result);
@@ -73,16 +73,16 @@ static int make_socket_non_blocking (int sfd)
     int flags, s;
 
     flags = fcntl (sfd, F_GETFL, 0);
-    if (flags == -1) {
+    if (flags == EPOLL_THPOOL_ERR_ERROR) {
         perror ("fcntl");
-        return -1;
+        return EPOLL_THPOOL_ERR_ERROR;
     }
 
     flags |= O_NONBLOCK;
     s = fcntl (sfd, F_SETFL, flags);
-    if (s == -1) {
+    if (s == EPOLL_THPOOL_ERR_ERROR) {
         perror ("fcntl");
-        return -1;
+        return EPOLL_THPOOL_ERR_ERROR;
     }
 
     return 0;
@@ -131,7 +131,7 @@ int socket_send(int sockfd)
                 usleep(1000);
                 continue;
             }
-            return -1;
+            return EPOLL_THPOOL_ERR_ERROR;
         }
 
         if((size_t)tmp == total) {
@@ -223,16 +223,16 @@ int main(int argc, char **argv)
 
     int server_socket_fd = create_and_bind(argv[1]);
     int rc = make_socket_non_blocking(server_socket_fd);
-    if(rc == -1) abort();
+    if(rc == EPOLL_THPOOL_ERR_ERROR) abort();
 
     rc = listen(server_socket_fd, MAXEVENTS);
-    if(rc == -1){
+    if(rc == EPOLL_THPOOL_ERR_ERROR){
         fprintf(stderr, "listen error\n");
         abort();
     }
 
     epoll_fd = epoll_create(256);
-    if(epoll_fd == -1){
+    if(epoll_fd == EPOLL_THPOOL_ERR_ERROR){
         fprintf(stderr, "epoll create error\n");
         abort();
     }
@@ -240,7 +240,7 @@ int main(int argc, char **argv)
     event.data.fd = server_socket_fd;
     event.events = EPOLLIN | EPOLLET;
     rc = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_socket_fd, &event);
-    if(rc == -1){
+    if(rc == EPOLL_THPOOL_ERR_ERROR){
         fprintf(stderr, "epoll_ctl failed\n");
         abort();
     }
@@ -266,29 +266,28 @@ int main(int argc, char **argv)
 
                     in_len = sizeof(in_addr);
                     in_fd = accept(server_socket_fd, &in_addr, &in_len);
-                    if(in_fd == -1){
+                    if(in_fd == EPOLL_THPOOL_ERR_ERROR){
                         if((errno == EAGAIN) || (errno == EWOULDBLOCK)){
                             break;
                         }else{
-                            printf("accept\n");
                             break;
                         }
                     }
 
                     rc = getnameinfo(&in_addr, in_len, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
-                    if(rc == 0){
+                    if(rc == EPOLL_THPOOL_ERR_SUCCESS){
                         printf("Accepted connection on descriptor %d "
                                "(host=%s, port=%s)\n", in_fd, hbuf, sbuf);
                     }
 
                     rc = make_socket_non_blocking(in_fd);
-                    if(rc == -1) abort();
+                    if(rc == EPOLL_THPOOL_ERR_ERROR) abort();
 
                     event.data.fd = in_fd;
                     event.events = EPOLLIN | EPOLLET;
                     rc = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, in_fd, &event);
-                    if(rc == -1){
-                        fprintf(stderr, "epoll ctl\n");
+                    if(rc == EPOLL_THPOOL_ERR_ERROR){
+                        fprintf(stderr, "epoll ctl add failed\n");
                         abort();
                     }
                 }
