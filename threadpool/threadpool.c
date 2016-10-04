@@ -312,6 +312,7 @@ static void task_queue_destroy(thpool_private *thpool_p)
 {
     task_queue_clear(thpool_p);
     free(thpool_p->tasks->has_tasks);
+    thpool_p->tasks->has_tasks = NULL;
 }
 
 static void bsem_init(bsem *bsem_p, int value)
