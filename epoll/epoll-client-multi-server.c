@@ -67,19 +67,19 @@ static int set_nonblocking_socket(int socket_fd)
     return SUCCESS;
 }
 
-int handle_write_event(int fd, int u32)
+int handle_write_event(int fd)
 {
     char buf[1024] = {0};
 
-    snprintf(buf, 1024, "this is epoll-client: %d, and connected %d\n",
-             getpid(), u32);
+    snprintf(buf, 1024, "this is epoll-client: %d\n",
+             getpid());
     if(write(fd, buf, 1024) < 0) {
         printf("write error, %s %d\n", __func__, __LINE__);
     }
     return 0;
 }
 
-int handle_read_event(int fd, int u32)
+int handle_read_event(int fd)
 {
     ssize_t count;
     char buf[1024] = {0};
@@ -91,7 +91,6 @@ int handle_read_event(int fd, int u32)
         }
     }
 
-    printf("read from u32: %d\n", u32);
     int sock = write(1, buf, count);
     if(sock == -1) {
         printf("write erro: %s %d\n", __func__, __LINE__);
@@ -133,13 +132,13 @@ int main(int argc, char **argv)
         for(int i = 0; i < nfds; i++) {
             if(events[i].events & EPOLLIN) {
                 /* printf("get EPOLLIN event\n"); */
-                handle_read_event(events[i].data.fd, events[i].data.u32);
+                handle_read_event(events[i].data.fd);
                 /* ev.data.fd = events[i].data.fd; */
                 /* ev.events = EPOLLET | EPOLLOUT; */
                 /* epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev); */
             } else if(events[i].events & EPOLLOUT) {
                 /* printf("get EPOLLOUT event\n"); */
-                handle_write_event(events[i].data.fd, events[i].data.u32);
+                handle_write_event(events[i].data.fd);
                 /* ev.data.fd = events[i].data.fd; */
                 /* ev.events = EPOLLET | EPOLLIN; */
                 /* epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev); */
