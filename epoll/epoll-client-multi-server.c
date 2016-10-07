@@ -67,19 +67,19 @@ static int set_nonblocking_socket(int socket_fd)
     return SUCCESS;
 }
 
-int handle_write_event(int fd)
+int handle_write_event(int fd, void *ptr)
 {
     char buf[1024] = {0};
 
-    snprintf(buf, 1024, "this is epoll-client: %d\n",
-             getpid());
+    snprintf(buf, 1024, "this is epoll-client: %d, ptr: %d\n",
+             getpid(), (int *)ptr);
     if(write(fd, buf, 1024) < 0) {
         printf("write error, %s %d\n", __func__, __LINE__);
     }
     return 0;
 }
 
-int handle_read_event(int fd)
+int handle_read_event(int fd, void *ptr)
 {
     ssize_t count;
     char buf[1024] = {0};
@@ -91,6 +91,7 @@ int handle_read_event(int fd)
         }
     }
 
+    printf("ptr: %d\n", (int *)ptr);
     int sock = write(1, buf, count);
     if(sock == -1) {
         printf("write erro: %s %d\n", __func__, __LINE__);
@@ -100,7 +101,7 @@ int handle_read_event(int fd)
 
 int main(int argc, char **argv)
 {
-    if (argc != 4) {
+    if (argc < 4) {
         fprintf (stderr, "Usage: %s [host] [port start] [port end]\n", argv[0]);
         exit (EXIT_FAILURE);
     }
@@ -111,16 +112,30 @@ int main(int argc, char **argv)
     static struct epoll_event *events;
 
     int client_sock;
-    int port_start = atoi(argv[2]);
-    int port_end = atoi(argv[3]);
-    for(int port = port_start; port <= port_end; port++) {
+    /* int port_start = atoi(argv[2]); */
+    /* int port_end = atoi(argv[3]); */
+    /* for(int port = port_start; port <= port_end; port++) { */
+    /*     client_sock = socket_create_bind(argv[1], port); */
+    /*     if(client_sock == ERROR) return 0; */
+
+    /*     ev.data.fd = client_sock; */
+    /*     /\* ev.data.ptr = (void *)port; *\/ */
+    /*     ev.events = EPOLLOUT | EPOLLIN |EPOLLET; */
+    /*     events = calloc(MAXEVENTS, sizeof(ev)); */
+    /*     int res = epoll_ctl(efd, EPOLL_CTL_ADD, client_sock, &ev); */
+    /* } */
+
+    for(int n = 2; n < argc; n++){
+        int port = atoi(argv[n]);
         client_sock = socket_create_bind(argv[1], port);
         if(client_sock == ERROR) return 0;
 
         ev.data.fd = client_sock;
+        /* ev.data.ptr = (void *)port; */
         ev.events = EPOLLOUT | EPOLLIN |EPOLLET;
         events = calloc(MAXEVENTS, sizeof(ev));
         int res = epoll_ctl(efd, EPOLL_CTL_ADD, client_sock, &ev);
+
     }
 
     while(1) {
@@ -132,13 +147,13 @@ int main(int argc, char **argv)
         for(int i = 0; i < nfds; i++) {
             if(events[i].events & EPOLLIN) {
                 /* printf("get EPOLLIN event\n"); */
-                handle_read_event(events[i].data.fd);
+                handle_read_event(events[i].data.fd, events[i].data.ptr);
                 /* ev.data.fd = events[i].data.fd; */
                 /* ev.events = EPOLLET | EPOLLOUT; */
                 /* epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev); */
             } else if(events[i].events & EPOLLOUT) {
                 /* printf("get EPOLLOUT event\n"); */
-                handle_write_event(events[i].data.fd);
+                handle_write_event(events[i].data.fd, events[i].data.ptr);
                 /* ev.data.fd = events[i].data.fd; */
                 /* ev.events = EPOLLET | EPOLLIN; */
                 /* epoll_ctl(efd, EPOLL_CTL_MOD, events[i].data.fd, &ev); */
