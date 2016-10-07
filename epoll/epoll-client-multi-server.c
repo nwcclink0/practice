@@ -112,20 +112,7 @@ int main(int argc, char **argv)
     static struct epoll_event *events;
 
     int client_sock;
-    /* int port_start = atoi(argv[2]); */
-    /* int port_end = atoi(argv[3]); */
-    /* for(int port = port_start; port <= port_end; port++) { */
-    /*     client_sock = socket_create_bind(argv[1], port); */
-    /*     if(client_sock == ERROR) return 0; */
-
-    /*     ev.data.fd = client_sock; */
-    /*     /\* ev.data.ptr = (void *)port; *\/ */
-    /*     ev.events = EPOLLOUT | EPOLLIN |EPOLLET; */
-    /*     events = calloc(MAXEVENTS, sizeof(ev)); */
-    /*     int res = epoll_ctl(efd, EPOLL_CTL_ADD, client_sock, &ev); */
-    /* } */
-
-    for(int n = 2; n < argc; n++){
+    for(int n = 2; n < argc; n++) {
         int port = atoi(argv[n]);
         client_sock = socket_create_bind(argv[1], port);
         if(client_sock == ERROR) return 0;
