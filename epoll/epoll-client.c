@@ -41,7 +41,7 @@ static int socket_create_bind(char *address, int port)
     }
 
     if(connect(socket_fd, (struct sockaddr*)&sa, sizeof(sa)) < 0) {
-        printf("connect failed");
+        printf("connect failed\n");
         return ERROR;
     }
     set_nonblocking_socket(socket_fd);
