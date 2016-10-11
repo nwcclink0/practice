@@ -241,14 +241,11 @@ int main (int argc, char *argv[])
                     readed += count;
                 }
 
-                if((count == -1) && (errno != EAGAIN)) {
+                if(((count == -1) && (errno != EAGAIN)) ||
+                   (count == 0)){
                     epoll_error_msg();
                     close(client_sock);
                     events[i].data.fd = -1;
-                }
-
-                if(count == 0) {
-                    close(client_sock);
                     continue;
                 }
 
