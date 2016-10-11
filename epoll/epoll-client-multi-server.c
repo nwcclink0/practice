@@ -72,7 +72,7 @@ int handle_write_event(int fd, void *ptr)
     char buf[1024] = {0};
 
     snprintf(buf, 1024, "this is epoll-client: %d, ptr: %d\n",
-             getpid(), (int *)ptr);
+             getpid(), (int )ptr);
     if(write(fd, buf, 1024) < 0) {
         printf("write error, %s %d\n", __func__, __LINE__);
     }
@@ -91,7 +91,7 @@ int handle_read_event(int fd, void *ptr)
         }
     }
 
-    printf("ptr: %d\n", (int *)ptr);
+    printf("ptr: %d\n", (int)ptr);
     int sock = write(1, buf, count);
     if(sock == -1) {
         printf("write erro: %s %d\n", __func__, __LINE__);
