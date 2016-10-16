@@ -123,10 +123,12 @@ int main(int argc, char **argv)
         ev.data.fd = client_sock;
         /* ev.data.ptr = (void *)port; */
         ev.events = EPOLLOUT | EPOLLIN |EPOLLET;
-        events = calloc(MAXEVENTS, sizeof(ev));
         int res = epoll_ctl(efd, EPOLL_CTL_ADD, client_sock, &ev);
 
     }
+
+    events = calloc(MAXEVENTS, sizeof(ev));
+    if(events == NULL) abort();
 
     while(1) {
 
