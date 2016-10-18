@@ -15,6 +15,7 @@
 
 #define SUCCESS 0
 #define ERROR 1
+#define ERROR_SERVER_DISCONNECT 2
 
 static int set_nonblocking_socket(int socket_fd);
 static int socket_create_bind(char *address, int port)
@@ -84,12 +85,11 @@ int handle_read_event(int fd)
     char buf[1024] = {0};
 
     count = read(fd, buf, 1024);
-    if(count == -1) {
-        if(errno != EAGAIN) {
-            printf("read\n");
-        }
+    if(((count == -1) && (errno != EAGAIN)) ||
+       (count == 0)){
+        close(fd);
+        return ERROR_SERVER_DISCONNECT;
     }
-
 
     int sock = write(1, buf, count);
     if(sock == -1) {
