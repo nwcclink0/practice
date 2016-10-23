@@ -239,6 +239,7 @@ int main (int argc, char *argv[])
 
                 while((count = read(events[i].data.fd, buf, 1024)) > 0) {
                     readed += count;
+                    s = write (1, buf, count);
                 }
 
                 if(((count == -1) && (errno != EAGAIN)) ||
@@ -249,7 +250,6 @@ int main (int argc, char *argv[])
                     continue;
                 }
 
-                s = write (1, buf, count);
 
                 event.data.fd = client_sock;
                 event.events = EPOLLOUT | EPOLLET;
@@ -261,7 +261,7 @@ int main (int argc, char *argv[])
                     printf("write error\n");
                     continue;
                 }
-                printf("write success\n");
+                /* printf("write success\n"); */
                 event.data.fd = client_sock;
                 event.events = EPOLLIN | EPOLLET;
                 epoll_ctl(efd, EPOLL_CTL_MOD, client_sock, &event);
