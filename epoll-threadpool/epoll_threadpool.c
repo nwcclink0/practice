@@ -163,6 +163,8 @@ void epoll_send(void *args)
 
     free(ev);
     ev = NULL;
+    free(info->event);
+    info->event = NULL;
     free(info);
     info = NULL;
     return;
@@ -179,8 +181,10 @@ void epoll_recv(void *args)
     ssize_t count = 0;
     ssize_t readed = 0;
 
+    int rc;
     while((count = read(client_sock, info->content, sizeof(info->content))) > 0) {
         readed += count;
+        rc = write(1, info->content, count);
     }
 
     if((count == -1) && (errno != EAGAIN)) {
@@ -194,8 +198,6 @@ void epoll_recv(void *args)
         return;
     }
 
-    printf("buf: %s\n", info->content);
-    int rc = write (1, info->content, count);
 
     struct epoll_event *ev = (struct epoll_event*)malloc(sizeof(struct epoll_event));
     /* struct epoll_event ev */;
@@ -204,6 +206,8 @@ void epoll_recv(void *args)
     epoll_ctl(info->epoll_fd, EPOLL_CTL_MOD, client_sock, ev);
     free(ev);
     ev = NULL;
+    free(info->event);
+    info->event = NULL;
     free(info);
     info = NULL;
     return;
@@ -217,7 +221,7 @@ int main(int argc, char **argv)
     struct epoll_event *events = NULL;
 
     if(argc != 2){
-        fprintf(stderr, "%s [host] [port]", argv[0]);
+        fprintf(stderr, "%s [port]", argv[0]);
         exit(EXIT_FAILURE);
     }
 
@@ -295,12 +299,15 @@ int main(int argc, char **argv)
             }else if(events[i].events & EPOLLIN){
                 info = (connection_info*)malloc(sizeof(connection_info));
                 info->epoll_fd = epoll_fd;
-                info->event = &events[i];
+                info->event = (struct epoll_event*)malloc(sizeof(struct epoll_event));
+                info->event->events = events[i].events;
+                info->event->data.fd = events[i].data.fd;
                 thread_pool_add_task(tpl, (void*)epoll_recv, (void *)info);
             }else if(events[i].events & EPOLLOUT){
                 info = (connection_info*)malloc(sizeof(connection_info));
-                info->epoll_fd = epoll_fd;
-                info->event = &events[i];
+                info->event = (struct epoll_event*)malloc(sizeof(struct epoll_event));
+                info->event->events = events[i].events;
+                info->event->data.fd = events[i].data.fd;
                 thread_pool_add_task(tpl, (void*)epoll_send, (void *)info);
             }
         }
