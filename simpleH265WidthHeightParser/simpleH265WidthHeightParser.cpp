@@ -418,10 +418,13 @@ int main(int argc, char **argv)
   memcpy(payload, pPaylad, sizeof(pPaylad));
 
   sps_t *sps = (sps_t*)malloc(sizeof(sps_t));
+  memset(sps, 0, sizeof(sps_t));
   nalbuf_t *nal_data = (nalbuf_t*)malloc(sizeof(nalbuf_t));
+  memset(nal_data, 0, sizeof(nalbuf_t));
 
   process_nalu(payload, 34, nal_data);
   profile_tier_level_data = (profile_tier_level_data_t*)malloc(sizeof(profile_tier_level_data_t));
+  memset(profile_tier_level_data, 0, sizeof(profile_tier_level_data_t));
   // memset(nal_data, 0x00, sizeof(nalbuf_t));
   // nal_data->buf = payload;
   // nal_data->pos = -1;
